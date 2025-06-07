@@ -23,6 +23,10 @@ on:
       docs-base-url:
         required: true
         type: string  # e.g., https://chickenjdk.github.io/github-actions-workflow
+      version:
+        required: false
+        type: string
+        default: ${{ github.ref_name }}
 
 jobs:
   build-and-release:
@@ -34,7 +38,7 @@ jobs:
       packages: write
 
     env:
-      VERSION: ${{ github.ref_name }}
+      VERSION: ${{ inputs['version'] }}
 
     steps:
       - name: Checkout code
