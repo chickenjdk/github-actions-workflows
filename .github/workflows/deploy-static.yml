@@ -37,7 +37,7 @@ runs:
     - name: Checkout static-files repo
       uses: actions/checkout@v3
       with:
-        repository: your-org/static-files
+        repository: chickenjdk/static-files
         token: ${{ inputs.STATIC_CONTENT_TOKEN }}
         path: static-files-repo
 
