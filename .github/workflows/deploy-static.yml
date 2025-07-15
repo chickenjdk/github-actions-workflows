@@ -19,6 +19,7 @@ runs:
         echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
         echo "SRC_PATH=${{ inputs.source_path }}" >> "$GITHUB_ENV"
     - name: Determine actual subdir name
+      shell: bash
       id: compute-subdir
       run: |
         if [ -z "${{ inputs.target_subdir }}" ]; then
@@ -28,6 +29,7 @@ runs:
         fi
 
     - name: Prepare files
+      shell: bash
       run: |
         mkdir -p temp-content/src/$REPO_NAME
         cp -r "${SRC_PATH}" "temp-content/src/$REPO_NAME/${{ steps.compute-subdir.outputs.subdir }}"
@@ -40,12 +42,14 @@ runs:
         path: static-files-repo
 
     - name: Copy item to repo
+      shell: bash
       run: |
         mkdir -p "static-files-repo/src/$REPO_NAME"
         rm -rf "static-files-repo/src/$REPO_NAME/${{ steps.compute-subdir.outputs.subdir }}"
         cp -r "temp-content/src/$REPO_NAME/${{ steps.compute-subdir.outputs.subdir }}" "static-files-repo/src/$REPO_NAME/"
 
     - name: Commit and push
+      shell: bash
       run: |
         cd static-files-repo
         git config user.name "github-actions[bot]"
