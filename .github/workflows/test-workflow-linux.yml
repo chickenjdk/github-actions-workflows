@@ -1,0 +1,10 @@
+name: Test Runner linux
+
+on: 
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: [self-hosted, Linux]
+    steps:
+      - run: echo "Running on self-hosted Linux runner"
