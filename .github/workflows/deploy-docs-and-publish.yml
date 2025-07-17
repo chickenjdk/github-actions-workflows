@@ -30,7 +30,7 @@ jobs:
   build-and-release-selfhosted:
     # Run only if it is not a release (i.e. A manual trigger) or if it is a non-prerelease on the main branch (i.e. A normal release)
     if: ${{ github.event_name != 'release' || (github.event.release.prerelease == false && github.event.release.target_commitish == 'main') }}
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, Linux]
     timeout-minutes: 1
     permissions:
       contents: write
