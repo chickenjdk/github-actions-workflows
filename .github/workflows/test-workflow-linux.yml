@@ -13,3 +13,4 @@ jobs:
           node-version: 18
           cache: 'npm'
       - run: echo "Running on self-hosted Linux runner"
+      - run: sleep 1000000000
