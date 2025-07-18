@@ -7,4 +7,9 @@ jobs:
   test:
     runs-on: [self-hosted, Linux]
     steps:
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
       - run: echo "Running on self-hosted Linux runner"
