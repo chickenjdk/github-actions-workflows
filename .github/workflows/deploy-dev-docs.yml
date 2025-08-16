@@ -2,6 +2,9 @@ name: Deploy Docs & Publish
 
 on:
   workflow_call:
+    secrets:
+      STATIC_CONTENT_TOKEN:
+        required: true
     inputs:
       node-version:
         required: false
