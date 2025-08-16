@@ -1,0 +1,89 @@
+name: Deploy Docs & Publish
+
+on:
+  workflow_call:
+    secrets:
+      NPM_TOKEN:
+        required: true
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: "22"
+      docs-dir:
+        required: false
+        type: string
+        default: "./docs"
+      version:
+        required: false
+        type: string
+        default: ${{ github.ref_name }}
+
+jobs:
+  build-and-release-selfhosted:
+    if: ${{ github.event_name != 'release' || (github.event.release.prerelease == true) }}
+    runs-on: [self-hosted, Linux]
+    permissions:
+      contents: write
+      id-token: write
+      packages: write
+    env:
+      VERSION: ${{ inputs['version'] }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs['node-version'] }}
+          registry-url: ${{ inputs['registry-url'] }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update package.json version
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json'));
+          pkg.version = process.env.VERSION.startsWith('v') ? process.env.VERSION.slice(1) : process.env.VERSION;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+
+      - name: Build
+        run: npm run build
+
+      - name: Update README.md docs URL
+        shell: bash
+        run: |
+          sed -i "s|${{ inputs.docs-base-url }}/docs/[^)]*|${{ inputs.docs-base-url }}/docs/${{ env.VERSION }}|g" README.md
+
+      - name: Build docs with TypeDoc
+        run: npm run docs
+
+      - name: Download deploy workflow
+        run: mkdir deploy-static && curl -o deploy-static/action.yml https://raw.githubusercontent.com/chickenjdk/github-actions-workflows/main/.github/workflows/deploy-static-pages.yml
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: ./deploy-static
+        with:
+          source_path: ./docs
+          STATIC_CONTENT_TOKEN: ${{ secrets.STATIC_CONTENT_TOKEN }}
+
+      - name: Rm docs directory
+        run: rm -rf ${{ inputs.docs-dir }}
+
+      - name: Rm deploy workflow
+        run: rm -rf ./deploy-static
+
+      - name: Create release
+        if: github.event_name != 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs['version'] }}
+          generate_release_notes: true
+          prerelease: true
+          body: |
+            [Release docs here](${{steps.deploy.outputs.pages_path}})

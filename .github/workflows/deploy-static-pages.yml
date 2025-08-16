@@ -1,0 +1,55 @@
+name: "Deploy Static Content"
+description: "Deploy static dirs/files to github pages, but always get a new url even for the same content or repo"
+inputs:
+  source_path:
+    description: 'Relative path to item to deploy'
+    required: true
+  STATIC_CONTENT_TOKEN:
+    description: 'The token to the static files repo. May be provided with this or the secrets block'
+    required: false   
+outputs:
+  pages_path:
+    description: "The path that the provided source_path is now hosted at"
+    value: "https://chickenjdk.github.io/static-files/${{steps.compute-subdir.outputs.subdir}}"
+runs:
+  using: "composite"
+  steps:
+    - name: Set vars
+      shell: bash
+      run: |
+        echo "SRC_PATH=${{ inputs.source_path }}" >> "$GITHUB_ENV"
+    - name: Determine subdir name
+      shell: bash
+      id: compute-subdir
+      run: |
+        echo "subdir=$(cat /dev/random | head -c 256 | sha512sum | head -c 128)" >> "$GITHUB_OUTPUT"
+
+    - name: Prepare files
+      shell: bash
+      run: |
+        mkdir -p temp-content/src
+        cp -r "${SRC_PATH}" "temp-content/src/${{ steps.compute-subdir.outputs.subdir }}"
+
+    - name: Checkout static-files repo
+      uses: actions/checkout@v3
+      with:
+        repository: chickenjdk/static-files
+        token: ${{ inputs.STATIC_CONTENT_TOKEN }}
+        path: static-files-repo
+
+    - name: Copy item to repo
+      shell: bash
+      run: |
+        mkdir -p "static-files-repo/src"
+        rm -rf "static-files-repo/src/${{ steps.compute-subdir.outputs.subdir }}"
+        cp -r "temp-content/src/${{ steps.compute-subdir.outputs.subdir }}" "static-files-repo/src"
+
+    - name: Commit and push
+      shell: bash
+      run: |
+        cd static-files-repo
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add "src/$REPO_NAME/${{ steps.compute-subdir.outputs.subdir }}"
+        git commit -m "Deploy static content for $REPO_NAME → ${{ steps.compute-subdir.outputs.subdir }}" || echo "Nothing to commit"
+        git push
