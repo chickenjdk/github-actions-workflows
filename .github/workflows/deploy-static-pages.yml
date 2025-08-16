@@ -22,7 +22,7 @@ runs:
       shell: bash
       id: compute-subdir
       run: |
-        echo "subdir=$(cat /dev/random | head -c 256 | sha512sum | head -c 128)" >> "$GITHUB_OUTPUT"
+        echo "subdir=$(head -c 256 /dev/random | sha512sum | head -c 128)" >> "$GITHUB_OUTPUT"
 
     - name: Prepare files
       shell: bash
