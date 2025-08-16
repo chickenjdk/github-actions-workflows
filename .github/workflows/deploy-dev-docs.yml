@@ -2,9 +2,6 @@ name: Deploy Docs & Publish
 
 on:
   workflow_call:
-    secrets:
-      NPM_TOKEN:
-        required: true
     inputs:
       node-version:
         required: false
